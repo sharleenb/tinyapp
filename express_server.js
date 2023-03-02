@@ -10,6 +10,16 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const generateRandomString = function() {
+  let i = 0;
+  let randomNum = '';
+  while (i < 6) {
+    randomNum += Math.random().toString(36).slice(2, 3)
+    i++
+  }
+  return randomNum;
+}
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });

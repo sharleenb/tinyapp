@@ -12,12 +12,12 @@ const urlDatabase = {
 
 const generateRandomString = function() {
   let i = 0;
-  let randomNum = '';
+  let id = '';
   while (i < 6) {
-    randomNum += Math.random().toString(36).slice(2, 3)
-    i++
+    id += Math.random().toString(36).slice(2, 3);
+    i++;
   }
-  return randomNum;
+  return id;
 }
 
 app.get("/", (req, res) => {
@@ -35,7 +35,14 @@ app.get("/urls/new", (req, res) => {
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  const shortId = generateRandomString()
+  urlDatabase[shortId] = req.body.longURL
+  res.redirect('/urls/:' + shortId)
+});
+
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id]
+  res.redirect(longURL);
 });
 
 app.get("/urls/:id", (req, res) => {

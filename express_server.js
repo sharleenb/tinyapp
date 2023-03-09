@@ -16,23 +16,23 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "abc",
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: "123",
   },
 };
 
 const getUserByEmail = function(email) {
-  let result = false;
-  for (let i = 0; i < users.length; i++) {
-    if (email === users.i[email]) {
-      result = true;
+  for (const user in users) {
+    if (email === users[user].email) {
+      return users[user];
+      break;
     }
   }
-  return users
+  return null;
 };
 
 const generateRandomString = function() {
@@ -85,9 +85,12 @@ app.post('/urls/:id', (req, res) => {
 
 app.post('/login', (req, res) => {
   const { email, password } = req.body
-  const userObject = users.find((user) => user.email === email)
-  if(!userObject) return res.send('User is not registered : (');
-  if(userObject.password !== password) return res.send( 'Auth error u.u');
+  let userObject = getUserByEmail(email)
+    if(userObject) {
+      if(userObject.password !== password) return res.status(403).send('Password does not match');
+    } else {
+      return res.status(403).send('User registration is not found')
+    }
   res.cookie('user_id', userObject.id);
   res.redirect ('/urls');
 });
@@ -95,13 +98,13 @@ app.post('/login', (req, res) => {
 app.post('/logout', (req, res) => {
   res
   .clearCookie('user_id')
-  .redirect('/urls')
+  .redirect('/login')
 });
 
 app.get('/login', (req, res) => {
   const templateLogin = {email: req.params.email, password: req.params.password, user_id: req.body['user_id']}
   res.render('login', templateLogin)
-})
+});
 
 app.get("/register", (req, res) => {
   const templateRegistration = {email: req.params.email, password: req.params.password, user_id: req.body['user_id'] }
@@ -112,9 +115,10 @@ app.post('/register', (req, res) => {
   const randomUserID = generateRandomString();
   const templateRegistration = {id: randomUserID, email: req.body.email, password: req.body.password}
   if(templateRegistration.email === '' || templateRegistration.password === '' || getUserByEmail(templateRegistration.email)) {
-    res.send("Status Code: 400")
+    res.status(400).send("Please try again!")
   } else {
     users.user3RandomID = templateRegistration;
+    console.log(users);
     res
     .cookie('user_id', templateRegistration.email)
     .redirect('/urls')

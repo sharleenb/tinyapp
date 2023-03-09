@@ -12,12 +12,12 @@
 </head>
 <%- include('partials/_header') %>
 <body>
-  <form method="POST" action="/login">
+  <form method="POST" action="/register">
     <label> Email </label>
-    <input type="email" name="email" >
+    <input type="email" name="email" value="Enter email">
     <label> Password </label>
-    <input type="password" name="password">
-    <button type="submit">Login</button></form>
+    <input type="text" name="password" value="Enter password">
+    <button type="submit">Create Account</button></form>
 <!-- Bootstrap JS -->
 <script
 src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
@@ -36,5 +36,3 @@ crossorigin="anonymous"
 ></script>
 </body>
 </html>
-
-

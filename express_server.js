@@ -2,9 +2,10 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser')
+const bcrypt = require("bcryptjs");
+const saltRounds = 10;
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser())
-
 app.set("view engine", "ejs")
 
 const urlDatabase = {
@@ -184,10 +185,11 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  const { email, password } = req.body
-  let userObject = getUserByEmail(email)
+  const { email, password } = req.body;
+  let userObject = getUserByEmail(email);
+  const hashedPassword = bcrypt.hashSync(password, 10);
     if(userObject) {
-      if(userObject.password !== password) return res.status(403).send('Password does not match');
+      if(!bcrypt.compareSync(userObject.password, hashedPassword)) return res.status(403).send('Password does not match');
     } else {
       return res.status(403).send('User registration is not found')
     }
@@ -213,12 +215,13 @@ app.get("/register", (req, res) => {
 
 app.post('/register', (req, res) => {
   const randomUserID = generateRandomString();
-  const templateRegistration = {id: randomUserID, email: req.body.email, password: req.body.password}
+  const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  const templateRegistration = {id: randomUserID, email: req.body.email, password: hashedPassword}
   if(templateRegistration.email === '' || templateRegistration.password === '' || getUserByEmail(templateRegistration.email)) {
     res.status(400).send("Please try again!")
   } else {
     users.user3RandomID = templateRegistration;
-    console.log(users);
     res
     .cookie('user_id', templateRegistration.email)
     .redirect('/urls')

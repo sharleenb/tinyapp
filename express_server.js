@@ -5,7 +5,6 @@ const {urlDatabase, users} = require('./database');
 const PORT = 8080; // default port 8080
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
-const saltRounds = 10;
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
@@ -15,7 +14,11 @@ app.use(cookieSession({
 app.set("view engine", "ejs");
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (req.session.user_id) {
+    res.redirect('/urls');
+  } else {
+    res.redirect('/login');
+  }
 });
 
 app.get("/urls", (req, res) => {
@@ -37,6 +40,61 @@ app.get("/urls/new", (req, res) => {
     res.redirect('/login');
   }
 });
+
+app.get("/urls/:id", (req, res) => {
+  if (req.session.user_id) {
+    const urlDatabaseForUser = urlsForUser(req.session.user_id);
+    if (urlDatabaseForUser[req.params.id]) {
+      const templateVars = { id: req.params.id,
+        longURL: urlDatabaseForUser[req.params.id].longURL,
+        email: req.session.user_id};
+      res.render("urls_show", templateVars);
+    } else {
+      res.send("This url is not owned by you");
+    }
+  } else {
+    res.send("Please login or create an account to shorten the URL");
+  }
+});
+
+app.get("/u/:id", (req, res) => {
+  if (urlDatabase[req.params.id]) {
+    const longURL = urlDatabase[req.params.id].longURL;
+    res.redirect(longURL);
+  } else {
+    res.send("This short URL does not exist, please try again.");
+  }
+});
+
+app.get('/login', (req, res) => {
+  if (!req.session.user_id) {
+    const templateLogin = {email: req.params.email, password: req.params.password, user_id: req.body['user_id']};
+    res.render('login', templateLogin);
+  } else {
+    res.redirect('/urls');
+  }
+});
+
+
+app.get("/register", (req, res) => {
+  if (!req.session.user_id) {
+    const templateRegistration = {email: req.params.email, password: req.params.password, user_id: req.body['user_id'] };
+    res.render("register", templateRegistration);
+  } else {
+    res.redirect('/urls');
+  }
+});
+
+
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase);
+});
+
+app.get("/hello", (req, res) => {
+  res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
+
+// USER REGISTRATION CODE BELOW
 
 app.post("/urls", (req, res) => {
   if (req.session.user_id) {
@@ -72,23 +130,6 @@ app.post("/urls/:id/edit", (req, res) => {
   } else {
     res.send("Please log in to access this page");
   }
-    
-});
-
-app.get("/urls/:id", (req, res) => {
-  if (req.session.user_id) {
-    const urlDatabaseForUser = urlsForUser(req.session.user_id);
-    if (urlDatabaseForUser[req.params.id]) {
-      const templateVars = { id: req.params.id,
-        longURL: urlDatabaseForUser[req.params.id].longURL,
-        email: req.session.user_id};
-      res.render("urls_show", templateVars);
-    } else {
-      res.send("This url is not owned by you");
-    }
-  } else {
-    res.send("Please login or create an account to shorten the URL");
-  }
 });
 
 app.post('/urls/:id', (req, res) => {
@@ -101,34 +142,6 @@ app.post('/urls/:id', (req, res) => {
     res.send("This id does not exist");
   } else {
     res.send("Please log in to access this page");
-  }
-});
-
-app.get("/u/:id", (req, res) => {
-  if (urlDatabase[req.params.id]) {
-    const longURL = urlDatabase[req.params.id].longURL;
-    res.redirect(longURL);
-  } else {
-    res.send("This short URL does not exist, please try again.");
-  }
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
-// USER REGISTRATION CODE BELOW
-
-app.get('/login', (req, res) => {
-  if (!req.session.user_id) {
-    const templateLogin = {email: req.params.email, password: req.params.password, user_id: req.body['user_id']};
-    res.render('login', templateLogin);
-  } else {
-    res.redirect('/urls');
   }
 });
 
@@ -148,16 +161,6 @@ app.post('/login', (req, res) => {
 app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect('/login');
-});
-
-
-app.get("/register", (req, res) => {
-  if (!req.session.user_id) {
-    const templateRegistration = {email: req.params.email, password: req.params.password, user_id: req.body['user_id'] };
-    res.render("register", templateRegistration);
-  } else {
-    res.redirect('/urls');
-  }
 });
 
 app.post('/register', (req, res) => {

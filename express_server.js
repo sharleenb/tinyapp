@@ -23,7 +23,8 @@ app.get("/", (req, res) => {
 
 app.get("/urls", (req, res) => {
   if (req.session.user_id) {
-    const templateVars = { urls: urlDatabase,
+    const urlDatabaseForUser = urlsForUser(req.session.user_id);
+    const templateVars = { urls: urlDatabaseForUser,
       email: req.session.user_id };
     res.render("urls_index", templateVars);
   } else {
@@ -75,7 +76,6 @@ app.get('/login', (req, res) => {
   }
 });
 
-
 app.get("/register", (req, res) => {
   if (!req.session.user_id) {
     const templateRegistration = {email: req.params.email, password: req.params.password, user_id: req.body['user_id'] };
@@ -85,7 +85,6 @@ app.get("/register", (req, res) => {
   }
 });
 
-
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
@@ -94,13 +93,17 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-// USER REGISTRATION CODE BELOW
+// POST ROUTES
 
 app.post("/urls", (req, res) => {
   if (req.session.user_id) {
+    if (req.body.longURL === ' ') {
+      res.send('Please enter a valid URL.')
+    } else {
     const shortId = generateRandomString();
     urlDatabase[shortId] = {longURL: req.body.longURL, userID: req.session.user_id};
     res.redirect('/urls/:' + shortId);
+    }
   } else {
     res.send("Please login or create an account to shorten the URL");
   }
@@ -121,10 +124,10 @@ app.post("/urls/:id/delete", (req, res) => {
 app.post("/urls/:id/edit", (req, res) => {
   const urlDatabaseForUser = urlsForUser(req.session.user_id);
   if (urlDatabaseForUser[req.params.id] && req.session.user_id) {
-    const templateVars = { id: req.params.id,
-      longURL: urlDatabaseForUser[req.params.id].longURL,
-      email: req.session.user_id};
-    res.render("urls_show", templateVars);
+      const templateVars = { id: req.params.id,
+        longURL: urlDatabaseForUser[req.params.id].longURL,
+        email: req.session.user_id};
+      res.render("urls_show", templateVars);
   } else if (!urlDatabaseForUser[req.params.id]) {
     res.send("This id does not exist");
   } else {
@@ -135,9 +138,13 @@ app.post("/urls/:id/edit", (req, res) => {
 app.post('/urls/:id', (req, res) => {
   const urlDatabaseForUser = urlsForUser(req.session.user_id);
   if (urlDatabaseForUser[req.params.id] && req.session.user_id) {
+    if (req.body.userInput === ' ') {
+      res.send('Please enter a valid URL.')
+    } else {
     const newLongURL = req.body.userInput;
     urlDatabase[req.params.id].longURL = newLongURL;
     res.redirect("/urls");
+    }
   } else if (!urlDatabaseForUser[req.params.id]) {
     res.send("This id does not exist");
   } else {

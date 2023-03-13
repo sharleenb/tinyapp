@@ -1,4 +1,5 @@
-const express_server = require('./express_server')
+const express_server = require('./express_server');
+const {urlDatabase, users} = require('./database');
 
 const getUserByEmail = function(email, database) {
   for (const user in database) {
